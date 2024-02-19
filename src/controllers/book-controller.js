@@ -1,3 +1,4 @@
+import { author } from "../models/Author.js";
 import { book } from "../models/Book.js"
 
 export class BookController {
@@ -27,9 +28,25 @@ export class BookController {
         }
     }
 
-    static async create(req, res) {
+    static async getByPublisher(req, res) {
         try {
-            await book.create(req.body);
+            const { publisher } = req.query
+            const booksByPublisher = await book.find({ publisher })
+            res.status(200).json(booksByPublisher)
+        } catch(err) {
+            console.error(err)
+            res.status(500).json({
+                message: "Server failed to fetch a Book."
+            });
+        }
+    }
+
+    static async create(req, res) {
+        const newBook = req.body;
+        try {
+            const findAuthor = await author.findById(newBook.author)
+            const completeBook = {...newBook, author: {...findAuthor._doc}}
+            await book.create(completeBook);
             res.status(201).end();
         } catch(err) {
             console.error(err)
